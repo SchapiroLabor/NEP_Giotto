@@ -36,6 +36,8 @@ For analysing your data, make sure the data structure is as described above. An 
 For running Giotto, you can just run this line in the terminal:
 `Rscript src/Giotto_SCNA.R`
 
+However, this does not work at the moment without showing me errors, will get back to that.
+
 
 
 
