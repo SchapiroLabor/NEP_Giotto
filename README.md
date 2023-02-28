@@ -1,5 +1,5 @@
 # Giotto_SCNA
-Giotto from Dries et al. 2021 for SCNA
+Giotto from Dries et al. 2021 for SCNA. https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02286-2
 
 # Introduction
 Giotto is a suite for many spatial analysis directions, while we are interested in the cell-cell interaction part. Giotto identifies distinct cell type(ct)/ct interaction patterns ny evaluating the enrichment of the frequency that each pair of cell-types is proximal to each other. For NBH definition, you can either use a kNN or Delaunay neighborhood network. For the Delaunay network, they cite i-niche. Further, the ratio of observed over expected frequencies between two ct is calculated by permutating (Monte Carlo sampling?) expected frequencies. P-values are calculated by observing how often the observed values are higher or lower than expected. A wrapper of the fucntion is written in cellProximityEnrichment() of the package.
@@ -33,10 +33,10 @@ Replace these lines in the script so far, will create a better solution at anoth
 
 For analysing your data, make sure the data structure is as described above. An output table per file will be saved in an "output" folder on the same level as your cloned github repo.
 
-For running Giotto, you can just run this line in the terminal:
-`Rscript src/Giotto_SCNA.R`
+For running Giotto, you can just run this line in the terminal while being navigated into `src` :
+`Rscript Giotto_SCNA.R`
 
-However, this does not work at the moment without showing me errors, will get back to that.
+
 
 
 
