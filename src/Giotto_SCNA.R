@@ -4,8 +4,8 @@ library(Giotto)
 library(reticulate)
 library(readr)
 library(tidyverse)
-library(stats)
 
+getwd()
 # Giotto and python configurations
 # Create Giotto path
 my_instructions = createGiottoInstructions(python_path = '/Users/chiaraschiller/Library/r-miniconda-arm64/bin/python3')
