@@ -1,0 +1,126 @@
+---
+title: "PCA"
+author: "Chiara Schiller"
+date: "2023-04-03"
+output: html_document
+---
+```{r}
+# Install packages
+library(FactoMineR)
+library(ggcorrplot)
+library('corrr')
+```
+
+```{r}
+library(tidyverse)
+library(factoextra)
+library(pheatmap)
+
+### cellPI are all the proximities files from the Giotto-SCNA script saved in output of Giotto
+
+data = do.call("rbind", cell_PI)
+
+data$sample <- gsub("\\..*","",rownames(data))
+unique(data$sample)
+
+try = data %>% select(label1, label2, PI_value, sample)
+
+try$key = paste(try$label1, try$label2, sep = "_")
+try = try %>% select(-c(label1, label2))
+
+try = spread(try, key = key, value = PI_value)
+
+
+rownames(try) = try$sample
+pheatmap(try[,-1], treeheight_row = 0, treeheight_col = 0)
+```
+Most straigh forward PCA method
+
+
+```{r}
+library(ggfortify)
+library(ggplot2)
+
+df <- try[,2:ncol(try)]
+pca_res <- prcomp(df, scale. = TRUE)
+try$group = sub("_.*", "", try$sample)
+
+autoplot(pca_res, data = try, colour = 'group')
+
+```
+```{r}
+
+```
+
+### Rest is playing around
+
+Normalize
+```{r}
+try # from analysis dataset, do save somewhere
+# check if sth is 0
+colSums(is.na(try))
+
+numerical_data <- try[,2:ncol(try)]
+
+data_normalized <- scale(numerical_data)
+head(data_normalized)
+```
+Correlate
+```{r}
+corr_matrix <- cor(data_normalized)
+ggcorrplot(corr_matrix)
+```
+PCA
+```{r}
+data.pca <- princomp(corr_matrix)
+summary(data.pca)
+
+#loadings
+data.pca$loadings[, 1:2]
+```
+Visualization
+```{r}
+library("devtools")
+install_github("kassambara/factoextra")
+library("factoextra")
+fviz_eig(data.pca, addlabels = TRUE)
+```
+Graph of vectors
+```{r}
+# Graph of the variables
+fviz_pca_var(data.pca, col.var = "black")
+```
+Contribution of features
+```{r}
+fviz_cos2(data.pca, choice = "var", axes = 1:2)
+```
+
+Plot PC1 and 2
+```{r}
+data.pca$scores
+
+scores <- data.frame(sample.groups, pca$x[,1:3])
+pc1.2 <- qplot(x=data.pca$scores[,1], y=data.pca$scores[,2], data=scores, colour=factor(sample.groups)) +
+  theme(legend.position="none")
+
+```
+
+other pca approach
+```{r}
+library(reshape2)
+library(ggplot2)
+pca <- prcomp(numerical_data, scale=T)
+variable.group = rownames(num)
+melted <- cbind(variable.group, melt(pca$rotation[,1:9]))
+barplot <- ggplot(data=melted) +
+  geom_bar(aes(x=Var1, y=value, fill=variable.group), stat="identity") +
+  facet_wrap(~Var2)
+```
+
+
+
+
+
+
+
+

@@ -13,49 +13,27 @@ output: html_notebook
 library(tidyverse)
 library(factoextra)
 
-
-cell_PI=readRDS("~/Documents/Master_thesis/Fork/PowerAnalysisForSpatialOmics/base_simulation/results/Giotto_PI_self_06.rds")
-names(cell_PI) = c(1:length(cell_PI))
-names(cell_PI) = paste("self", names(cell_PI), sep = "_")
-
-#cell_PI$sample <- substr(row.names(cell_PI), 1, 1)
-
-cell_PI_ran=readRDS("~/Documents/Master_thesis/Fork/PowerAnalysisForSpatialOmics/base_simulation/results/Giotto_PI_random.rds")
-names(cell_PI_ran) = c((length(cell_PI)+1):(length(cell_PI)+length(cell_PI_ran)))
-names(cell_PI_ran) = paste("ran", names(cell_PI_ran), sep = "_")
-
-
-
-data_list = c(cell_PI, cell_PI_ran)
-data = do.call("rbind", data_list)
+data = do.call("rbind", cell_PI)
 
 data$sample <- gsub("\\..*","",rownames(data))
 unique(data$sample)
 
-
-# create distance matrix
-
 try = data %>% select(label1, label2, PI_value, sample)
-table(try$sample)
 
-###from here on k-means, but make hierarchical clustering
 try$key = paste(try$label1, try$label2, sep = "_")
 try = try %>% select(-c(label1, label2))
 
 try = spread(try, key = key, value = PI_value)
 
-corr_matrix <- cor(t(try[,-1]))
+# just form hierarchically clustered heatmap for all samples to get a feeling for the interactions
+
 library(ggplot2)
 library(pheatmap)
-pheatmap(corr_matrix, annotation_row = )
+
 rownames(try) = try$sample
-
+jpeg(file = "./../../output/giotto_heatmap.jpeg", res = 100)
 pheatmap(try[,-1], treeheight_row = 0, treeheight_col = 0)
-pheatmap(try[,-1], kmeans_k = 2, treeheight_row = 0, treeheight_col = 0)
-
-km <- kmeans(try[,-1], centers=2)
-cluster_assignments <- km$cluster
-result = cbind(try[,1],cluster_assignments)
+dev.off()
 
 ```
 
