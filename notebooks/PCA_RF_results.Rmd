@@ -17,7 +17,8 @@ library(factoextra)
 library(pheatmap)
 
 ### cellPI are all the proximities files from the Giotto-SCNA script saved in output of Giotto
-
+cell_PI_1333 = cell_PI
+cell_PI = cell_PI_1333
 data = do.call("rbind", cell_PI)
 
 data$sample <- gsub("\\..*","",rownames(data))
@@ -48,9 +49,140 @@ try$group = sub("_.*", "", try$sample)
 autoplot(pca_res, data = try, colour = 'group')
 
 ```
+## Now try random forest to get AUC
+
 ```{r}
+# generate initial dataset again
+data = do.call("rbind", cell_PI)
+
+data$sample <- gsub("\\..*","",rownames(data))
+unique(data$sample)
+
+try = data %>% select(label1, label2, PI_value, sample)
+
+try$key = paste(try$label1, try$label2, sep = "_")
+try = try %>% select(-c(label1, label2))
+
+try = spread(try, key = key, value = PI_value)
+
+
+rownames(try) = try$sample
+
+library(randomForestSRC)
+# play around, which samples you would like to have in
+
+sig_matrix <- as.matrix(try[,-1])
+#sig_matrix = sig_matrix[-c(21:40),]
+labels <- rep(c("A","B","C"), each=100)
+#labels <- rep(c("A","B"), each=20)
+
+# Convert labels to a factor
+labels <- as.factor(labels)
+
+# Fit the model using k-fold cross-validation
+cv_rf <- rfsrc(labels ~ ., 
+               data = data.frame(sig_matrix, labels), 
+               ntree = 500, 
+               cv.fold = 10)
+
+# Print the cross-validation results
+cv_rf
+```
+### Now with equal dist
+```{r}
+### cellPI are all the proximities files from the Giotto-SCNA script saved in output of Giotto
+cell_PI_equal = cell_PI
+cell_PI = cell_PI_equal
+data = do.call("rbind", cell_PI)
+
+data$sample <- gsub("\\..*","",rownames(data))
+unique(data$sample)
+
+try = data %>% select(label1, label2, PI_value, sample)
+
+try$key = paste(try$label1, try$label2, sep = "_")
+try = try %>% select(-c(label1, label2))
+
+try = spread(try, key = key, value = PI_value)
+
+
+rownames(try) = try$sample
+pheatmap(try[,-1], treeheight_row = 0, treeheight_col = 0)
+```
+Most straigh forward PCA method
+
+
+```{r}
+library(ggfortify)
+library(ggplot2)
+
+df <- try[,2:ncol(try)]
+pca_res <- prcomp(df, scale. = TRUE)
+try$group = sub("_.*", "", try$sample)
+
+autoplot(pca_res, data = try, colour = 'group')
 
 ```
+## Now try random forest to get AUC
+
+```{r}
+# generate initial dataset again
+data = do.call("rbind", cell_PI)
+
+data$sample <- gsub("\\..*","",rownames(data))
+unique(data$sample)
+
+try = data %>% select(label1, label2, PI_value, sample)
+
+try$key = paste(try$label1, try$label2, sep = "_")
+try = try %>% select(-c(label1, label2))
+
+try = spread(try, key = key, value = PI_value)
+
+
+rownames(try) = try$sample
+
+library(randomForestSRC)
+# play around, which samples you would like to have in
+
+sig_matrix <- as.matrix(try[,-1])
+#sig_matrix = sig_matrix[-c(21:40),]
+labels <- rep(c("A","B","C"), each=100)
+#labels <- rep(c("A","B"), each=20)
+
+# Convert labels to a factor
+labels <- as.factor(labels)
+
+# Fit the model using k-fold cross-validation
+cv_rf <- rfsrc(labels ~ ., 
+               data = data.frame(sig_matrix, labels), 
+               ntree = 500, 
+               cv.fold = 10)
+
+# Print the cross-validation results
+cv_rf
+```
+Look at cell type distribution per sample
+```{r}
+files = list.files("./../../../../data/Sim_100_equal4/", pattern = ".csv")
+data_path = "./../../../../data/Sim_100_equal4/"
+data_list = list()
+
+for (i in files){
+  print(i)
+data_list[[i]] <- readr::read_csv(paste0(data_path,i))
+data_list[[i]]$sample = rep(i, nrow(data_list[[i]]))
+}
+
+data = do.call("rbind", data_list)
+ct_count = as.data.frame.matrix(table(data$sample, data$ct))
+ct_count$group = c(rep("ran", 100), rep("self06", 100), rep("self045", 100))
+
+ggplot(ct_count, aes(x = group, y = `0`)) + 
+  geom_violin() +
+  labs(x = "Group", y = "Value", title = "Boxplot by Group")
+```
+
 
 ### Rest is playing around
 

@@ -16,8 +16,8 @@ Sys.setenv(RETICULATE_PYTHON = "/Users/chiaraschiller/Library/r-miniconda-arm64/
 
 # load simulated data
 
-files = list.files("./../../../../data/", pattern = ".csv")
-data_path = "./../../../../data/"
+files = list.files("./../../../../data/Sim_100_equal4/", pattern = ".csv")
+data_path = "./../../../../data/Sim_100_equal4/"
 data_list = list()
 
 for (i in files){
@@ -64,7 +64,24 @@ for (i in giotto_list){
 
   cell_PI[[files[x]]] = separate(cell_proximities[[2]], unified_int, into = c("label1", "label2"), sep = "--")
   #names(cell_PI)[i]=gsub("\\..*", "", files[i])
-  write.csv(cell_PI[[files[x]]],file=paste0("./../../output/",gsub("\\..*", "", files[x]) ,"_proximities.csv"),row.names = TRUE)
+  write.csv(cell_PI[[files[x]]],file=paste0("./../../output/sim100_equal4_",gsub("\\..*", "", files[x]) ,"_proximities.csv"),row.names = TRUE)
 }
+
+## create matrix for comparison
+data = do.call("rbind", cell_PI)
+
+data$sample <- gsub("\\..*","",rownames(data))
+
+data = data %>% select(label1, label2, PI_value, sample)
+
+data$key = paste(data$label1, data$label2, sep = "_")
+data = data %>% select(-c(label1, label2))
+
+
+data = spread(data, key = key, value = PI_value)
+rownames(data) = data$sample
+data = data[,-1]
+
+write.csv(data,"./../../../Comparison/results/Giotto_sim100_equal4.csv")
 
 
