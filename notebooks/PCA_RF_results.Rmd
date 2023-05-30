@@ -34,6 +34,7 @@ try = spread(try, key = key, value = PI_value)
 
 rownames(try) = try$sample
 pheatmap(try[,-1], treeheight_row = 0, treeheight_col = 0)
+
 ```
 Most straigh forward PCA method
 
