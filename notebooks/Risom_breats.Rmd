@@ -53,11 +53,15 @@ melted_df$Patient_ID = as.character(melted_df$Patient_ID)
 ```
 Rather boxplot, otherwise Denis will laugh again
 ```{r}
+pdf("./../../output/breast_risom_ct_abundances.pdf", height = 4, width = 6)
 ggplot(melted_df, aes(x = factor(cell_type), y = percentage, color = Status, group = interaction(Status, cell_type))) +
   geom_boxplot() +
   #facet_grid(. ~ tool) +
+  xlab("cell type") +
+  ylab("abundance") +
   theme_test() +
   theme(axis.text.x = element_text(size = 9, angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
 ```
 No bigger cell type differences, macbe a bit more tumor cells? Let's compare only bigger categories
 
@@ -75,11 +79,15 @@ melted_df <- gather(prop, key = "cell_type", value = "percentage", -c("Patient_I
 # Create stacked barplot
 melted_df$Patient_ID = as.character(melted_df$Patient_ID)
 
+pdf("./../../output/breast_risom_rough_ct_abundances.pdf", height = 3, width = 4)
 ggplot(melted_df, aes(x = factor(cell_type), y = percentage, color = Status, group = interaction(Status, cell_type))) +
   geom_boxplot() +
   #facet_grid(. ~ celllineage) +
+  xlab("cell type") +
+  ylab("abundance") +
   theme_test() +
   theme(axis.text.x = element_text(size = 9, angle = 90, vjust = 0.5, hjust = 1))
+dev.off()
 ```
 
 

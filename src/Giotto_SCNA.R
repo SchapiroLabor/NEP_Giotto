@@ -19,8 +19,8 @@ Sys.setenv(RETICULATE_PYTHON = "/Users/chiaraschiller/Library/r-miniconda-arm64/
 
 # load simulated data
 
-files = list.files("./../../../../data/Sim_100_asym_01/", pattern = ".csv")
-data_path = "./../../../../data/Sim_100_asym_01/"
+files = list.files("./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap/", pattern = ".csv")
+data_path = "./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap/"
 data_list = list()
 
 
@@ -86,4 +86,8 @@ data = spread(data, key = key, value = PI_value)
 rownames(data) = data$sample
 data = data[,-1]
 
-write.csv(data,"./../../../Comparison/results_4ct_cross01/Giotto_delaunay_4ct_cross01.csv")
+write.csv(data,"./../../../Comparison/results_4ct_asym_0.2grid_self/Giotto_delaunay_4ct_cross01.csv")
+
+library(pheatmap)
+pheatmap(data)
+
