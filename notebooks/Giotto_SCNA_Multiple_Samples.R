@@ -1,4 +1,5 @@
 #Giotto usage for multiple samples
+# script created by Margot Chazotte for analyzing multiple samples with Giotto
 
 library(Giotto)
 library(reticulate)

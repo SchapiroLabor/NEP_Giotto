@@ -7,8 +7,8 @@ library(tidyverse)
 library(foreach)
 library(doParallel)
 
+#### This script uses simulated data to run Giotto and save results as interaction by sample matrix ####
 
-getwd()
 # Giotto and python configurations
 # Create Giotto path
 my_instructions = createGiottoInstructions(python_path = '/Users/chiaraschiller/Library/r-miniconda-arm64/bin/python3')
@@ -23,7 +23,7 @@ files = list.files("./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025k
 data_path = "./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap/"
 data_list = list()
 
-
+## Paralellize
 # Set the number of cores to use
 num_cores <- 4
 cl <- makeCluster(num_cores)
@@ -73,11 +73,8 @@ for(i in 1:length(cell_PI_list)){
 
 ## create matrix for comparison
 data = do.call("rbind", cell_PI_list)
-
 data$sample <- sub(".csv.[0-9]*$", "", data$sample)
-
 data = data %>% select(label1, label2, PI_value, sample)
-
 data$key = paste(data$label1, data$label2, sep = "_")
 data = data %>% select(-c(label1, label2))
 
@@ -90,4 +87,6 @@ write.csv(data,"./../../../Comparison/results_4ct_asym_0.2grid_self/Giotto_delau
 
 library(pheatmap)
 pheatmap(data)
+
+sessionInfo()
 

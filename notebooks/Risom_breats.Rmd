@@ -5,12 +5,24 @@ date: "2023-05-04"
 output: html_document
 ---
 
+##Summary
+In this scipt, I explore the Risom breast dataset from https://data.mendeley.com/datasets/d87vg86zd8/3. I test if I can also compare SCNA tools with true biological data, as ground-truth is missing
+The dataset has progressor and non-progressor sampples of DCIS. I checked the cell type abundance differences and they are okay.
+I run giotto on it and try to find statistically different cell-cell interactions between progressors and non-progressors.
+The cohorts are imbalanced and I sample them up. However, the results do not look very promising.
+
+##Script
+
 Load packages
 ```{r}
 library(Giotto)
 library(reticulate)
 library(readr)
 library(tidyverse)
+library(DESeq2)
+library(ggplot2)
+library(ggfortify)
+library(factoextra)
 ```
 
 Load in data
@@ -19,13 +31,11 @@ data = read_csv("./../../../../data/Risom_breast/Single_Cell_Data.csv")
 unique(data$celllineage) # --> is less defined than phenotype
 unique(data$compartment)
 ```
-Cell type distributions
+###Cell type distributions
 ```{r}
 table(data$Point_Num ,data$phenotype)
-
-
-
 ```
+
 # exclude normal and look at ct distribution between progressor and non-progressor
 
 ```{r}
@@ -41,8 +51,7 @@ prop = left_join(prop, meta[,c("Patient_ID", "Status")], by = "Patient_ID")
 prop = prop %>% filter(Status %in% c("progressor", "nonprogressor"))
 
 ```
-
-## first, look at ct distributino between progressors and non-progressors
+first, look at ct distributino between progressors and non-progressors
 ```{r, fig.width=12}
 # Melt data into long format
 melted_df <- gather(prop, key = "cell_type", value = "percentage", -c("Patient_ID", "Status"))
@@ -50,10 +59,7 @@ melted_df <- gather(prop, key = "cell_type", value = "percentage", -c("Patient_I
 # Create stacked barplot
 melted_df$Patient_ID = as.character(melted_df$Patient_ID)
 
-```
-Rather boxplot, otherwise Denis will laugh again
-```{r}
-pdf("./../../output/breast_risom_ct_abundances.pdf", height = 4, width = 6)
+#pdf("./../../output/breast_risom_ct_abundances.pdf", height = 4, width = 6)
 ggplot(melted_df, aes(x = factor(cell_type), y = percentage, color = Status, group = interaction(Status, cell_type))) +
   geom_boxplot() +
   #facet_grid(. ~ tool) +
@@ -61,9 +67,9 @@ ggplot(melted_df, aes(x = factor(cell_type), y = percentage, color = Status, gro
   ylab("abundance") +
   theme_test() +
   theme(axis.text.x = element_text(size = 9, angle = 90, vjust = 0.5, hjust = 1))
-dev.off()
+#dev.off()
 ```
-No bigger cell type differences, macbe a bit more tumor cells? Let's compare only bigger categories
+No bigger cell type differences, maybe a bit more tumor cells? Let's compare only bigger categories
 
 ```{r}
 #compartment enrichment per cell type
@@ -79,7 +85,7 @@ melted_df <- gather(prop, key = "cell_type", value = "percentage", -c("Patient_I
 # Create stacked barplot
 melted_df$Patient_ID = as.character(melted_df$Patient_ID)
 
-pdf("./../../output/breast_risom_rough_ct_abundances.pdf", height = 3, width = 4)
+#pdf("./../../output/breast_risom_rough_ct_abundances.pdf", height = 3, width = 4)
 ggplot(melted_df, aes(x = factor(cell_type), y = percentage, color = Status, group = interaction(Status, cell_type))) +
   geom_boxplot() +
   #facet_grid(. ~ celllineage) +
@@ -87,9 +93,9 @@ ggplot(melted_df, aes(x = factor(cell_type), y = percentage, color = Status, gro
   ylab("abundance") +
   theme_test() +
   theme(axis.text.x = element_text(size = 9, angle = 90, vjust = 0.5, hjust = 1))
-dev.off()
+#dev.off()
 ```
-
+## Giotto analysis
 
 Get x and y coordinates of label or event
 ```{r}
@@ -112,8 +118,7 @@ for (i in seq_along(csv_list)) {
 }
 ```
 
-
-Check if left_join works
+Join metadata with real data
 ```{r}
 #data_df <- do.call(rbind, csv_list)
 #data = left_join(data, data_df, by = c("label", "Point_Num"))
@@ -150,8 +155,7 @@ for (i in 1:length(list_joined)){
 
 ```
 
-
-Giotto code
+Run Giotto
 ```{r}
 #Giotto usage for simulated data as input
 
@@ -230,67 +234,52 @@ data = data %>% select(-c(label1, label2))
 data = spread(data, key = key, value = PI_value)
 rownames(data) = data$sample
 data = data[,-1]
-
-final = data
-
-# exclude rows with only NAs
-#final <- final[rowSums(!is.na(final)) > 1,]
-#sum(is.na(final[4,]))
-
-back = final
-final = back
-
 write.csv(data,"./../../../Comparison/results_4ct_self/Giotto_kNN10_4ct_self.csv")
 
-final[is.na(final)] <- 0
-
-
+data[is.na(data)] <- 0
 
 ```
-Add metadata information
+Look at heatmap of interactions
 
 ```{r, fig.width=30, fig.height=7}
-back
+
 library(pheatmap)
 pheatmap(back)
 ```
+## Look for cell-cell interactions differences between the groups
 
-## second, exclude everything else, and look which interactions can be found there
-```{r}
-
-```
-
-How do I look for enrichment between two groups? Look at mean?
+Data wrangling
 ```{r, fig.width=30, fig.height=7}
 # match patient information to have progressors and non progressors
 meta = read_csv("./../../../../data/Risom_breast/Table_S1_Patient_Feature_Table.csv")
 meta = meta %>% rename("Point_Num" = "PointNumber")
 
-dat = back
 dat$Point_Num = as.numeric(rownames(dat))
 dat = left_join(dat, meta[,c("Patient_ID", "Status", "Point_Num")], by = "Point_Num")
 
+# generate table for progressor and non-progressor
 dat_progr = dat %>% filter(Status == "progressor")
 dat_nonprogr = dat %>% filter(Status == "nonprogressor")
 
 pheatmap(as.matrix(dat_progr[ , !names(dat_progr) %in% c("Patient_ID", "Status", "Point_Num")], na.rm = TRUE), cluster_rows = FALSE, cluster_cols = FALSE)
+```
+
+Look at enriched interactions for progressors
+```{r, fig.width=30, fig.height=7}
 
 sort(colMeans(dat_progr[ , !names(dat_progr) %in% c("Patient_ID", "Status", "Point_Num")], na.rm = TRUE), decreasing = TRUE)
 ```
+And at enriched interactions of non-progressors
 ```{r, fig.width=30, fig.height=7}
 pheatmap(as.matrix(dat_nonprogr[ , !names(dat_nonprogr) %in% c("Patient_ID", "Status", "Point_Num")]), cluster_rows = FALSE, cluster_cols = FALSE)
 sort(colMeans(dat_nonprogr[ , !names(dat_nonprogr) %in% c("Patient_ID", "Status", "Point_Num")], na.rm = TRUE), decreasing = TRUE)
 ```
-## Make DESeq analysis
+Make DESeq analysis
 
 ```{r}
 # only include interactions present in both groups
 # Load the DESeq2 package
 intersect(colnames(dat_nonprogr), colnames(dat_progr))
-
-
-library("DESeq2")
-
 # Load count data (replace 'counts.csv' with the name of your file)
 counts <- read.csv("counts.csv", row.names = 1)
 
@@ -301,7 +290,6 @@ dds <- DESeqDataSetFromMatrix(countData = counts,
 
 # Perform differential expression analysis
 dds <- DESeq(dds)
-
 # Extract the results
 results <- results(dds)
 
@@ -313,10 +301,6 @@ print(topGenes)
 ## look at PCA if cohorts can be distinguished from each other
 
 ```{r}
-library(ggplot2)
-library(ggfortify)
-library(factoextra)
-
 dat = dat %>% filter(Status %in% c("progressor", "nonprogressor"))
 df = dat[ , !names(dat_nonprogr) %in% c("Patient_ID", "Status", "Point_Num")]
 df[is.na(df)] <- 0
@@ -329,11 +313,11 @@ print(autoplot(pca_res, data = df, colour = 'group') +
       ggtitle(names(all)[i]) +
         theme_bw()
       )
-
-
 ```
 
-Run rf to look at importances
+Cohorts cannot be distinguished based on cell-cell interactions here in PCA
+
+Run random forest to look at importances
 
 ```{r}
 stat = list()
@@ -364,8 +348,6 @@ set.seed(123)
 Run only once
 ```{r}
 
-
-
 # Combine index variable with data
 data <- df
 
@@ -382,7 +364,6 @@ predictions <- predict(model, newdata = test)
 
 
 stat <- F1_Score(as.character(predictions), test$group)
-
 
 # View the F1 score
 
@@ -403,8 +384,9 @@ library(caret)
 train(group_index ~ ., data = train, method = "rf", trControl = trainControl(method = "cv", number = 5))
 str(train)
 ```
+##Imbalanced data
 
-## how to deal with imbalanced dataset, here I sample up
+how to deal with imbalanced dataset? Here I sample up
 ```{r}
 trainup<-upSample(x=train[,-ncol(train)],
                   y=as.factor(train$group))
@@ -537,9 +519,6 @@ for (i in 1:10) {
 
 }
 
-
-
-
 # Calculate the accuracy of each model on the test data
 accuracies <- sapply(predictions, function(preds) {
   confusionMatrix(preds, test_data[[target]])$overall["Accuracy"]
@@ -550,42 +529,12 @@ ensemble_accuracy <- mean(unlist(accuracies))
 
 ```
 
+The performed analysis shows the difficulty when using biological data
 
-# Rather statisticall test for differences, like DESeq
 
 ```{r}
-# Load the DESeq2 package
-library(limma)
-
-dat[is.na(dat)] <- 0
-mydata = dat[ , !names(dat_nonprogr) %in% c("Patient_ID", "Status", "Point_Num")]
-
-design <- model.matrix(~0 + dat$Status, data=mydata)
-
-fit <- lmFit(as.matrix(t(mydata)), design)
-
-# Calculate the moderated t-statistics and corresponding p-values using the eBayes() function
-fit <- eBayes(fit)
-
-results <- topTable(fit, coef=1, adjust.method="fdr", number=Inf)
-
-sig_features <- subset(results, adj.P.Val < 0.05 & abs(logFC) > 1)
-
-
+sessionInfo()
 ```
-
-
-
-# try ANOVA
-
-```{r}
-
-model <- aov(data = dat, interaction_measure ~ group)
-summary(model)
-
-
-```
-
 
 
 
