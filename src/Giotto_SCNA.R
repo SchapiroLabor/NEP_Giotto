@@ -7,6 +7,7 @@ library(tidyverse)
 library(foreach)
 library(doParallel)
 
+
 #### This script uses simulated data to run Giotto and save results as interaction by sample matrix ####
 
 # Giotto and python configurations
@@ -19,7 +20,7 @@ Sys.setenv(RETICULATE_PYTHON = "/Users/chiaraschiller/Library/r-miniconda-arm64/
 
 # load simulated data
 
-files = list.files("./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap/", pattern = ".csv")
+files = list.files("./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap//", pattern = ".csv")
 data_path = "./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap/"
 data_list = list()
 
