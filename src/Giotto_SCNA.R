@@ -12,16 +12,26 @@ library(doParallel)
 
 # Giotto and python configurations
 # Create Giotto path
-my_instructions = createGiottoInstructions(python_path = '/Users/chiaraschiller/Library/r-miniconda-arm64/bin/python3')
-Sys.setenv(RETICULATE_PYTHON = "/Users/chiaraschiller/Library/r-miniconda-arm64/bin/python3") 
+#my_instructions = createGiottoInstructions(python_path = '/Users/chiaraschiller/Library/Library/r-miniconda-arm64/bin/python3')
+#Sys.setenv(RETICULATE_PYTHON = "/Users/chiaraschiller/Library/r-miniconda-arm64/bin/python3") 
+
+my_instructions = createGiottoInstructions(python_path = '/Users/chiaraschiller/miniconda3/bin/python')
+Sys.setenv(RETICULATE_PYTHON = "/Users/chiaraschiller/miniconda3/bin/python") 
 #py_config()
 
 #installGiottoEnvironment()
 
 # load simulated data
 
-files = list.files("./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap//", pattern = ".csv")
-data_path = "./../../../../data/Sim_nbh15_asym01_1000_grid0.2_1kiter_025kswap/"
+files = list.files("./../../../../data/Sim_nbh2_asym01_1000_grid0.2_300iter_50swap/", pattern = ".csv")
+data_path = "./../../../../data/Sim_nbh2_asym01_1000_grid0.2_300iter_50swap/"
+
+#files = list.files("./../../../../../data/Risom_breast/processed_files_celllineage/", pattern = ".csv")
+#data_path = "./../../../../../data/Risom_breast/processed_files_celllineage/"
+
+#files = list.files("./../../../../../MI_heart_paper/data/MI_heart_lunaphore_split_csv/", pattern = ".csv")
+#data_path = "./../../../../../MI_heart_paper/data/MI_heart_lunaphore_split_csv/"
+
 data_list = list()
 
 ## Paralellize
@@ -29,7 +39,6 @@ data_list = list()
 num_cores <- 4
 cl <- makeCluster(num_cores)
 registerDoParallel(cl)
-
 
 # create dataframe with random values to pretend to have expression data to generate a giotto object
 #for (i in data_list){
@@ -54,7 +63,7 @@ foreach(i = 1:length(files), .packages = c("Giotto","reticulate", "tidyverse")) 
   giotto_list = createSpatialNetwork(gobject = data, minimum_k = 2,
                                                   method = "Delaunay",
                                                   #method = "kNN",
-                                                  #k = 10,
+                                                  #k = 8,
                                                   )
   
   cell_proximities = cellProximityEnrichment(gobject = giotto_list,
@@ -74,7 +83,8 @@ for(i in 1:length(cell_PI_list)){
 
 ## create matrix for comparison
 data = do.call("rbind", cell_PI_list)
-data$sample <- sub(".csv.[0-9]*$", "", data$sample)
+#data$sample <- sub(".csv.[0-9]*$", "", data$sample)
+data$sample <- sub(".csv$", "", data$sample)
 data = data %>% select(label1, label2, PI_value, sample)
 data$key = paste(data$label1, data$label2, sep = "_")
 data = data %>% select(-c(label1, label2))
@@ -84,7 +94,16 @@ data = spread(data, key = key, value = PI_value)
 rownames(data) = data$sample
 data = data[,-1]
 
-write.csv(data,"./../../../Comparison/results_4ct_asym_0.2grid_self/Giotto_delaunay_4ct_cross01.csv")
+data <- data.frame(lapply(data, function(x) ifelse(is.na(x) | is.nan(x), 0, x)))
+data = as.data.frame(data)
+rownames(data) = sub(".csv", "", files )
+
+#write.csv(data,"./../../../Comparison/results_4ct_asym_0.2grid_self/Giotto_delaunay_4ct_cross01.csv")
+#write.csv(data,file=paste0("./../../../Comparison/results_Risom/Giotto_delaunay_celllineage.csv"),row.names = TRUE)
+#write.csv(data,file=paste0("./../../../../../MI_heart_paper/results_coloc/Giotto_knn8_MIdata.csv"),row.names = TRUE)
+write.csv(data,"./../../../Comparison/202411_results_simfixed_asym//Giotto_delaunay_4ct_cross01.csv", row.names = TRUE)
+
+#df_heatmap = data %>% select(`Endocardial.cells_Mono...Macros.Ccr2.`, Endocardial.cells_Neutrophils)
 
 library(pheatmap)
 pheatmap(data)
