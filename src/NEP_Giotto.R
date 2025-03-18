@@ -3,7 +3,8 @@
 ### Schiller et at. 2025.                         ###
 ### Author: Chiara Schiller                       ###
 #####################################################
-
+#packageurl <- "https://cran.r-project.org/src/contrib/Archive/reticulate/reticulate_1.34.0.tar.gz"
+#install.packages(packageurl, repos = NULL, type = "source")
 # Load packages
 library(Giotto)
 library(reticulate)
@@ -15,23 +16,25 @@ library(doRNG)
 library(here)
 library(pheatmap)
 
-
 ### Data paths
 # Define paths
 data_path <- here::here("../../../../data/20250217_sym00_nbh2_1000dim_grid200_300iter_50swaps")
-output_path <- here::here("../../../Comparison/20250218_results_sym/Giotto_delaunay_4ct_self00.csv")
+output_path <- here::here("../../../Comparison/20250218_results_sym/Giotto_delaunay_4ct_self00_testversions.csv")
 # Get list of CSV files
 files <- list.files(data_path, pattern = ".csv", full.names = TRUE)
-
+files = files[1:20]
 ### Configuration
 # Set seeds
 set.seed(42)
 reticulate::py_run_string("import numpy as np; np.random.seed(42)")
+
 # Giotto and Python configurations
 python_path <- "/Users/chiaraschiller/miniconda3/bin/python"
 my_instructions <- createGiottoInstructions(python_path = python_path)
 Sys.setenv(RETICULATE_PYTHON = python_path)
-reticulate::py_config()
+
+#reticulate::py_config()
+
 # Set up parallel processing
 num_cores <- detectCores() - 1  # Use one less than available cores
 cl <- makeCluster(num_cores)
@@ -103,4 +106,7 @@ pheatmap(data)
 
 sessionInfo()
 
-
+writeLines(capture.output({
+  print(R.version.string)  # Print R version
+  sessioninfo::session_info()  # Print detailed package info
+}), "session_info.txt")
