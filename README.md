@@ -14,27 +14,7 @@ Installation is described here: https://rubd.github.io/Giotto_site/ and copied b
 library(remotes)  # if not installed: install.packages('remotes')
 remotes::install_github("RubD/Giotto")`
 
-Other Dependencies are
-
-- pheatmap (>= 1.0.12)
-- here (>= 1.0.1)
-- doRNG (>= 1.8.6)
-- rngtools (>= 1.5.2)
-- doParallel (>= 1.0.17)
-- iterators (>= 1.0.14)
-- foreach (>= 1.5.2)
-- lubridate (>= 1.9.3)
-- forcats (>= 1.0.0)
-- stringr (>= 1.5.0)
-- dplyr (>= 1.1.3)
-- purrr (>= 1.0.2)
-- tidyr (>= 1.3.0)
-- tibble (>= 3.2.1)
-- ggplot2 (>= 3.4.4)
-- tidyverse (>= 2.0.0)
-- readr (>= 2.1.4)
-- reticulate (>= 1.34.0)
-- Giotto (>= 1.1.2)
+The installed packages and versions can be found in `session_info.txt`
 
 ## miniconda env
 
